@@ -2,6 +2,7 @@ MVTec Defect Detection Report
 ==============================
 Image          : wood_sample.png
 Result         : defect_detected
-Edge pixels    : 577
-Edge density   : 0.0088
+Confidence     : 0.9994
+Edge pixels    : 572
+Edge density   : 0.0087
 Threshold      : 0.0050

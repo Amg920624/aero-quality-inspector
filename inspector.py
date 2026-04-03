@@ -1,4 +1,5 @@
 import sys
+import math
 import cv2
 import numpy as np
 import urllib.request
@@ -42,17 +43,32 @@ def create_synthetic_wood_defect(dest_path="wood_sample.png"):
     return dest_path
 
 
+def compute_confidence(density, threshold):
+    """Confidence score in [0.5, 1.0] for the classification label.
+
+    Uses a sigmoid centered at threshold so that confidence is ~0.5 when
+    density is right at the threshold, and approaches 1.0 as density moves
+    further away in either direction.
+    """
+    k = 10.0
+    x = k * (density - threshold) / max(threshold, 1e-9)
+    sigmoid = 1.0 / (1.0 + math.exp(-x))
+    return sigmoid if density >= threshold else 1.0 - sigmoid
+
+
 def classify_defect(edges, threshold_density=0.005):
     """Classify image as defect_detected or clean based on edge density.
 
     Edge density = edge pixels / total pixels.
     Above threshold => defect_detected.
+    Returns label, edge pixel count, density, and confidence score.
     """
     total_pixels = edges.shape[0] * edges.shape[1]
     edge_pixels = int(np.count_nonzero(edges))
     density = edge_pixels / total_pixels
     label = "defect_detected" if density >= threshold_density else "clean"
-    return label, edge_pixels, density
+    confidence = compute_confidence(density, threshold_density)
+    return label, edge_pixels, density, confidence
 
 
 def run_inspection(image_path):
@@ -64,8 +80,8 @@ def run_inspection(image_path):
     edges = cv2.Canny(gray, threshold1=100, threshold2=200)
     cv2.imwrite("output.png", edges)
 
-    label, edge_pixels, density = classify_defect(edges)
-    return label, edge_pixels, density
+    label, edge_pixels, density, confidence = classify_defect(edges)
+    return label, edge_pixels, density, confidence
 
 
 def main():
@@ -83,13 +99,14 @@ def main():
         else:
             print(f"Downloaded sample: {image_path}")
 
-    label, edge_pixels, density = run_inspection(image_path)
+    label, edge_pixels, density, confidence = run_inspection(image_path)
 
     report = (
         f"MVTec Defect Detection Report\n"
         f"==============================\n"
         f"Image          : {image_path}\n"
         f"Result         : {label}\n"
+        f"Confidence     : {confidence:.4f}\n"
         f"Edge pixels    : {edge_pixels}\n"
         f"Edge density   : {density:.4f}\n"
         f"Threshold      : 0.0050\n"
