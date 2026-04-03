@@ -5,7 +5,9 @@ Workflow:
   1. User uploads an image.
   2. inspector.py classifies the defect and produces an edge map.
   3. advisor.py loads engineering_standards.json and returns ACCEPT/MONITOR/REJECT.
-  4. Dashboard displays: original image | edge map | classification | advisory.
+  4. document_generator.py creates NCR, Work Order, and Engineering Order PDFs.
+  5. Dashboard displays: original image | edge map | classification | advisory
+     and provides download buttons for all three documents.
 """
 
 import tempfile
@@ -17,6 +19,11 @@ import numpy as np
 
 from inspector import run_inspection
 from advisor import get_advisory, format_advisory, load_standards
+from document_generator import (
+    generate_ncr,
+    generate_work_order,
+    generate_engineering_order,
+)
 
 # Load standards once at startup
 _STANDARDS = load_standards()
@@ -27,21 +34,36 @@ DECISION_COLOURS = {
     "REJECT":  "#dc3545",   # red
 }
 
+# Default placeholder values for document fields
+DEFAULT_PART_NUMBER = "PN-00000"
+DEFAULT_ZONE        = "ZONE-A"
 
-def inspect_and_advise(image: np.ndarray):
-    """Core pipeline called by Gradio on every image upload.
+
+def inspect_and_advise(
+    image: np.ndarray,
+    part_number: str,
+    zone: str,
+):
+    """Core pipeline called by Gradio on every inspection run.
 
     Parameters
     ----------
-    image : np.ndarray
-        RGB image array provided by gr.Image (type='numpy').
+    image       : RGB image array provided by gr.Image (type='numpy').
+    part_number : Aircraft part number entered by the user.
+    zone        : Aircraft zone / station entered by the user.
 
     Returns
     -------
-    tuple of (edge_map_rgb, classification_html, advisory_text)
+    tuple of (edge_map_rgb, classification_html, advisory_text,
+              ncr_path, wo_path, eo_path)
     """
+    no_docs = (None, None, None)
+
     if image is None:
-        return None, "<p>No image provided.</p>", "Upload an image to begin."
+        return None, "<p>No image provided.</p>", "Upload an image to begin.", *no_docs
+
+    part_number = part_number.strip() or DEFAULT_PART_NUMBER
+    zone        = zone.strip()        or DEFAULT_ZONE
 
     # Save the uploaded image to a temp file so inspector.py can read it
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_in:
@@ -100,9 +122,38 @@ def inspect_and_advise(image: np.ndarray):
       <td style="color:#a6adc8;">FAA Reference</td>
       <td style="font-size:0.85em; color:#bac2de;">{advisory.faa_reference}</td>
     </tr>
+    <tr>
+      <td style="color:#a6adc8;">Part Number</td>
+      <td style="font-size:0.85em;">{part_number}</td>
+    </tr>
+    <tr>
+      <td style="color:#a6adc8;">Aircraft Zone</td>
+      <td style="font-size:0.85em;">{zone}</td>
+    </tr>
   </table>
 </div>
 """
+
+        # Generate all three documents
+        ncr_path = generate_ncr(
+            defect_type=label,
+            decision=advisory.decision,
+            density=density,
+            confidence=confidence,
+            part_number=part_number,
+            zone=zone,
+        )
+        wo_path = generate_work_order(
+            defect_type=label,
+            repair_procedure=advisory.repair_procedure,
+            part_number=part_number,
+        )
+        eo_path = generate_engineering_order(
+            defect_type=label,
+            decision=advisory.decision,
+            regulatory_ref=advisory.faa_reference,
+        )
+
     finally:
         for p in (tmp_in_path, tmp_out_path):
             try:
@@ -110,7 +161,7 @@ def inspect_and_advise(image: np.ndarray):
             except OSError:
                 pass
 
-    return edge_rgb, classification_html, advisory_text
+    return edge_rgb, classification_html, advisory_text, ncr_path, wo_path, eo_path
 
 
 # ---------------------------------------------------------------------------
@@ -123,13 +174,14 @@ with gr.Blocks(
     css="""
         #title { text-align:center; }
         #advisory-box textarea { font-family: monospace !important; font-size: 0.85em !important; }
+        #docs-section { border-top: 2px solid #2c6fad; margin-top: 8px; padding-top: 8px; }
     """,
 ) as demo:
 
     gr.Markdown(
         "# Aero Quality Inspector\n"
         "Upload a surface image to detect defects (scratch / pitting / crazing / inclusion) "
-        "and receive an FAA AC 43.13-based engineering advisory.",
+        "and receive an FAA AC 43.13-based engineering advisory with auto-generated compliance documents.",
         elem_id="title",
     )
 
@@ -140,6 +192,17 @@ with gr.Blocks(
                 type="numpy",
                 image_mode="RGB",
             )
+            with gr.Row():
+                part_number_input = gr.Textbox(
+                    label="Part Number",
+                    placeholder=DEFAULT_PART_NUMBER,
+                    value="",
+                )
+                zone_input = gr.Textbox(
+                    label="Aircraft Zone / Station",
+                    placeholder=DEFAULT_ZONE,
+                    value="",
+                )
             run_btn = gr.Button("Run Inspection", variant="primary")
 
         with gr.Column(scale=1):
@@ -156,6 +219,22 @@ with gr.Blocks(
             elem_id="advisory-box",
         )
 
+    # Document download section
+    gr.Markdown("### Generated Compliance Documents", elem_id="docs-section")
+    with gr.Row():
+        ncr_download = gr.File(
+            label="Non-Conformance Report (NCR)",
+            interactive=False,
+        )
+        wo_download = gr.File(
+            label="Work Order (WO)",
+            interactive=False,
+        )
+        eo_download = gr.File(
+            label="Engineering Order (EO)",
+            interactive=False,
+        )
+
     # Example images shipped with the repo
     example_files = [
         f for f in ["scratch_1.bmp", "pitted_1.bmp", "crazing_1.bmp", "inclusion_1.bmp"]
@@ -168,17 +247,27 @@ with gr.Blocks(
             label="Example Images (NEU dataset samples)",
         )
 
+    _outputs = [
+        edge_output,
+        classification_output,
+        advisory_output,
+        ncr_download,
+        wo_download,
+        eo_download,
+    ]
+    _inputs = [input_image, part_number_input, zone_input]
+
     run_btn.click(
         fn=inspect_and_advise,
-        inputs=input_image,
-        outputs=[edge_output, classification_output, advisory_output],
+        inputs=_inputs,
+        outputs=_outputs,
     )
 
     # Also run on image upload for instant feedback
     input_image.change(
         fn=inspect_and_advise,
-        inputs=input_image,
-        outputs=[edge_output, classification_output, advisory_output],
+        inputs=_inputs,
+        outputs=_outputs,
     )
 
 if __name__ == "__main__":
