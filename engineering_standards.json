@@ -1,0 +1,76 @@
+{
+  "_reference": "FAA Advisory Circular AC 43.13-1B: Acceptable Methods, Techniques, and Practices - Aircraft Inspection and Repair",
+  "_units": "density = edge_pixels / total_pixels (dimensionless ratio from Canny edge detection)",
+  "defect_standards": {
+    "scratch": {
+      "description": "Linear surface damage caused by abrasive contact",
+      "faa_reference": "AC 43.13-1B Chapter 4, Section 4-47",
+      "thresholds": {
+        "accept":  { "max_density": 0.025, "note": "Minor surface scratch, no structural compromise" },
+        "monitor": { "max_density": 0.040, "note": "Moderate scratch depth; schedule inspection at next maintenance" },
+        "reject":  { "max_density": 1.000, "note": "Deep or extensive scratch exceeding allowable limits" }
+      },
+      "repair_procedures": {
+        "accept":  "Polish affected area with 400-grit wet/dry abrasive paper, blend into surrounding surface, apply corrosion inhibitor per MIL-C-16173 Grade 2.",
+        "monitor": "Measure scratch depth with profilometer. If depth < 10% of material thickness, blend and re-inspect within 100 flight hours. Apply temporary protective coating.",
+        "reject":  "Remove component from service. Perform material-removal blending per AC 43.13-1B Fig. 4-28 or replace part. Return to service only after DER sign-off."
+      }
+    },
+    "pitting": {
+      "description": "Localised corrosion pits on metal surface",
+      "faa_reference": "AC 43.13-1B Chapter 6, Section 6-7",
+      "thresholds": {
+        "accept":  { "max_density": 0.010, "note": "Isolated shallow pits, < 10% surface coverage" },
+        "monitor": { "max_density": 0.018, "note": "Moderate pit density; corrosion may be progressing" },
+        "reject":  { "max_density": 1.000, "note": "Extensive pitting indicating advanced corrosion" }
+      },
+      "repair_procedures": {
+        "accept":  "Clean area with Alodine 1200 conversion coating. Apply epoxy primer (MIL-PRF-23377) within 4 hours of treatment.",
+        "monitor": "Chemical treatment with phosphoric acid wash. Measure pit depth; if < 5% of wall thickness, treat and re-inspect every 50 flight hours.",
+        "reject":  "Remove affected section. Inspect adjacent structure for inter-granular corrosion. Replace or blend-repair per AC 43.13-1B Section 6-7(g). Mandatory corrosion inhibitor treatment."
+      }
+    },
+    "crazing": {
+      "description": "Network of fine surface cracks (stress crazing or solvent crazing in composites/acrylics)",
+      "faa_reference": "AC 43.13-1B Chapter 3, Section 3-6 and Chapter 5, Section 5-4",
+      "thresholds": {
+        "accept":  { "max_density": 0.060, "note": "Superficial crazing confined to surface layer only" },
+        "monitor": { "max_density": 0.110, "note": "Crazing extends toward substrate; stress concentrations present" },
+        "reject":  { "max_density": 1.000, "note": "Through-thickness cracking or structural crazing" }
+      },
+      "repair_procedures": {
+        "accept":  "Sand lightly with 320-grit, inspect for depth with dye-penetrant (ASTM E1417). Apply two-part polyurethane topcoat.",
+        "monitor": "Dye-penetrant inspection mandatory. If cracks < 0.005 in. deep, sand, apply fibre-reinforced filler, and re-inspect within 25 flight hours.",
+        "reject":  "Ground aircraft. Perform ultrasonic C-scan per ASTM E2533. Replace panel or perform composite patch repair per AC 43.13-1B Section 3-6. Requires IA sign-off."
+      }
+    },
+    "inclusion": {
+      "description": "Foreign material (slag, oxide, non-metallic particles) embedded in surface or substrate",
+      "faa_reference": "AC 43.13-1B Chapter 4, Section 4-12 and AMS 2631 ultrasonic inspection",
+      "thresholds": {
+        "accept":  { "max_density": 0.160, "note": "Micro-inclusions below AMS allowable size limit" },
+        "monitor": { "max_density": 0.220, "note": "Inclusion cluster detected; further NDE required" },
+        "reject":  { "max_density": 1.000, "note": "Inclusion density exceeds AMS 2175 Grade C limits" }
+      },
+      "repair_procedures": {
+        "accept":  "Document location and size. Magnetic-particle or fluorescent penetrant inspection every 200 flight hours per AMS 2641.",
+        "monitor": "Ultrasonic phased-array scan (AMS 2631). If largest inclusion < 0.050 in. and no cluster, monitor and re-test at 100 flight hours.",
+        "reject":  "Remove from service immediately. Submit for metallurgical failure analysis per ASTM E2332. Replace with certified material per AMS 2175. Mandatory airworthiness directive review."
+      }
+    },
+    "clean": {
+      "description": "No significant surface defects detected",
+      "faa_reference": "N/A",
+      "thresholds": {
+        "accept":  { "max_density": 1.000, "note": "Surface meets all acceptance criteria" },
+        "monitor": { "max_density": 0.000, "note": "N/A" },
+        "reject":  { "max_density": 0.000, "note": "N/A" }
+      },
+      "repair_procedures": {
+        "accept":  "No action required. Continue normal inspection intervals.",
+        "monitor": "N/A",
+        "reject":  "N/A"
+      }
+    }
+  }
+}
