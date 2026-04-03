@@ -1,7 +1,41 @@
-MVTec Defect Detection Report
-==============================
-Image          : wood_sample.png
-Result         : defect_detected
-Edge pixels    : 577
-Edge density   : 0.0088
-Threshold      : 0.0050
+NEU Surface Defect Inspection Report
+=====================================
+
+Defect Type    : scratch
+Image          : scratch_1.bmp
+Edge Map       : output_scratch.png
+Detected Label : scratch
+Edge Pixels    : 1820
+Edge Density   : 0.0455
+Confidence     : 0.650
+
+Defect Type    : pitted
+Image          : pitted_1.bmp
+Edge Map       : output_pitted.png
+Detected Label : pitting
+Edge Pixels    : 312
+Edge Density   : 0.0078
+Confidence     : 0.687
+
+Defect Type    : crazing
+Image          : crazing_1.bmp
+Edge Map       : output_crazing.png
+Detected Label : crazing
+Edge Pixels    : 2275
+Edge Density   : 0.0569
+Confidence     : 0.569
+
+Defect Type    : inclusion
+Image          : inclusion_1.bmp
+Edge Map       : output_inclusion.png
+Detected Label : inclusion
+Edge Pixels    : 10227
+Edge Density   : 0.2557
+Confidence     : 0.624
+
+Density thresholds:
+  < 0.005         -> clean
+  0.005 - 0.02    -> pitting
+  0.02  - 0.05    -> scratch
+  0.05  - 0.15    -> crazing
+  > 0.15          -> inclusion
