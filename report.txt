@@ -1,0 +1,7 @@
+MVTec Defect Detection Report
+==============================
+Image          : wood_sample.png
+Result         : defect_detected
+Edge pixels    : 577
+Edge density   : 0.0088
+Threshold      : 0.0050
