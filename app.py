@@ -76,7 +76,7 @@ def inspect_and_advise(
         bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(tmp_in_path, bgr)
 
-        label, edge_pixels, density, confidence = run_inspection(tmp_in_path, tmp_out_path)
+        label, edge_pixels, density, confidence_score = run_inspection(tmp_in_path, tmp_out_path)
 
         # Load edge map and convert back to RGB for Gradio
         edge_bgr = cv2.imread(tmp_out_path, cv2.IMREAD_GRAYSCALE)
@@ -107,7 +107,7 @@ def inspect_and_advise(
     </tr>
     <tr>
       <td style="color:#a6adc8;">Confidence</td>
-      <td>{confidence:.1%}</td>
+      <td>{confidence_score:.1%}</td>
     </tr>
     <tr>
       <td style="color:#a6adc8;">Engineering Decision</td>
@@ -139,7 +139,7 @@ def inspect_and_advise(
             defect_type=label,
             decision=advisory.decision,
             density=density,
-            confidence=confidence,
+            confidence=confidence_score,
             part_number=part_number,
             zone=zone,
         )

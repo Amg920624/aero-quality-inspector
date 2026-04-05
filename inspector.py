@@ -6,6 +6,8 @@ import os
 
 NEU_BASE_URL = "https://raw.githubusercontent.com/abin24/Surface-Inspection/master/NEU-CLS/"
 
+CONFIDENCE_THRESHOLD = 0.70
+
 DEFECT_TYPES = ["scratch", "pitted", "crazing", "inclusion"]
 
 DEFECT_FILES = {
@@ -96,7 +98,7 @@ def create_synthetic_defect(defect_type, dest_path):
 
 
 def classify_defect(edges):
-    """Return defect type label, edge pixel count, density, and confidence.
+    """Return defect type label, edge pixel count, density, and confidence_score.
 
     Density ranges:
       < 0.005  : clean
@@ -104,6 +106,11 @@ def classify_defect(edges):
       0.02-0.05 : scratch
       0.05-0.15 : crazing
       > 0.15   : inclusion
+
+    If the confidence_score of the winning class is below CONFIDENCE_THRESHOLD,
+    the label is overridden to "unclassified_defect" to prevent a forced
+    low-confidence classification from reaching the advisory pipeline.
+    confidence_score always reflects the raw model confidence for traceability.
     """
     total_pixels = edges.shape[0] * edges.shape[1]
     edge_pixels = int(np.count_nonzero(edges))
@@ -114,6 +121,8 @@ def classify_defect(edges):
     labels = ["clean", "pitting", "scratch", "crazing", "inclusion"]
 
     label = labels[-1]
+    confidence_score = 1.0
+
     for i, (lo, hi) in enumerate(zip(boundaries[:-1], boundaries[1:])):
         if lo <= density < hi:
             label = labels[i]
@@ -121,11 +130,13 @@ def classify_defect(edges):
             interval = hi - lo
             centre = (lo + hi) / 2
             distance_from_centre = abs(density - centre) / (interval / 2)
-            confidence = round(1.0 - 0.5 * distance_from_centre, 3)
-            return label, edge_pixels, density, confidence
+            confidence_score = round(1.0 - 0.5 * distance_from_centre, 3)
+            break
 
-    # density >= 1.0 edge case
-    return label, edge_pixels, density, 1.0
+    if confidence_score < CONFIDENCE_THRESHOLD:
+        label = "unclassified_defect"
+
+    return label, edge_pixels, density, confidence_score
 
 
 def run_inspection(image_path, output_path):
@@ -137,8 +148,8 @@ def run_inspection(image_path, output_path):
     edges = cv2.Canny(gray, threshold1=100, threshold2=200)
     cv2.imwrite(output_path, edges)
 
-    label, edge_pixels, density, confidence = classify_defect(edges)
-    return label, edge_pixels, density, confidence
+    label, edge_pixels, density, confidence_score = classify_defect(edges)
+    return label, edge_pixels, density, confidence_score
 
 
 def main():
@@ -154,16 +165,16 @@ def main():
             print(f"[{defect_type}] Download failed — generating synthetic image.")
             image_path = create_synthetic_defect(defect_type, src_path)
 
-        label, edge_pixels, density, confidence = run_inspection(image_path, out_path)
+        label, edge_pixels, density, confidence_score = run_inspection(image_path, out_path)
         results[defect_type] = {
             "image": image_path,
             "edge_map": out_path,
             "label": label,
             "edge_pixels": edge_pixels,
             "density": density,
-            "confidence": confidence,
+            "confidence_score": confidence_score,
         }
-        print(f"[{defect_type}] label={label}  density={density:.4f}  confidence={confidence:.3f}  -> {out_path}")
+        print(f"[{defect_type}] label={label}  density={density:.4f}  confidence_score={confidence_score:.3f}  -> {out_path}")
 
     # Build report
     lines = [
@@ -180,7 +191,7 @@ def main():
             f"Detected Label : {r['label']}",
             f"Edge Pixels    : {r['edge_pixels']}",
             f"Edge Density   : {r['density']:.4f}",
-            f"Confidence     : {r['confidence']:.3f}",
+            f"Confidence     : {r['confidence_score']:.3f}",
             "",
         ]
 

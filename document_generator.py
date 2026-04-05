@@ -486,21 +486,23 @@ def generate_engineering_order(
 
 def _defect_description(defect_type: str) -> str:
     return {
-        "scratch":   "Linear surface damage caused by abrasive contact",
-        "pitting":   "Localised corrosion pits on metal surface",
-        "crazing":   "Network of fine surface cracks (stress or solvent crazing)",
-        "inclusion": "Foreign material embedded in surface or substrate",
-        "clean":     "No significant surface defects detected",
+        "scratch":             "Linear surface damage caused by abrasive contact",
+        "pitting":             "Localised corrosion pits on metal surface",
+        "crazing":             "Network of fine surface cracks (stress or solvent crazing)",
+        "inclusion":           "Foreign material embedded in surface or substrate",
+        "clean":               "No significant surface defects detected",
+        "unclassified_defect": "Surface anomaly detected; classifier confidence below threshold — manual inspection required",
     }.get(defect_type.lower(), "Unclassified surface anomaly")
 
 
 def _faa_ref(defect_type: str) -> str:
     return {
-        "scratch":   "AC 43.13-1B Chapter 4, Section 4-47",
-        "pitting":   "AC 43.13-1B Chapter 6, Section 6-7",
-        "crazing":   "AC 43.13-1B Chapter 3, Section 3-6; Chapter 5, Section 5-4",
-        "inclusion": "AC 43.13-1B Chapter 4, Section 4-12; AMS 2631",
-        "clean":     "N/A",
+        "scratch":             "AC 43.13-1B Chapter 4, Section 4-47",
+        "pitting":             "AC 43.13-1B Chapter 6, Section 6-7",
+        "crazing":             "AC 43.13-1B Chapter 3, Section 3-6; Chapter 5, Section 5-4",
+        "inclusion":           "AC 43.13-1B Chapter 4, Section 4-12; AMS 2631",
+        "clean":               "N/A",
+        "unclassified_defect": "AC 43.13-1B – consult DER (low-confidence detection)",
     }.get(defect_type.lower(), "AC 43.13-1B – consult DER")
 
 
@@ -514,21 +516,23 @@ def _decision_basis(decision: str) -> str:
 
 def _wo_priority(defect_type: str) -> str:
     return {
-        "inclusion": "AOG",
-        "crazing":   "AOG",
-        "scratch":   "Routine",
-        "pitting":   "Routine",
-        "clean":     "Scheduled",
+        "inclusion":           "AOG",
+        "crazing":             "AOG",
+        "scratch":             "Routine",
+        "pitting":             "Routine",
+        "clean":               "Scheduled",
+        "unclassified_defect": "AOG",
     }.get(defect_type.lower(), "Routine")
 
 
 def _wo_hours(defect_type: str) -> str:
     return {
-        "inclusion": "4–8 hrs (NDE + replacement)",
-        "crazing":   "3–6 hrs (composite repair)",
-        "scratch":   "1–2 hrs (blend/polish)",
-        "pitting":   "2–4 hrs (chemical treatment)",
-        "clean":     "0.5 hrs (documentation only)",
+        "inclusion":           "4–8 hrs (NDE + replacement)",
+        "crazing":             "3–6 hrs (composite repair)",
+        "scratch":             "1–2 hrs (blend/polish)",
+        "pitting":             "2–4 hrs (chemical treatment)",
+        "clean":               "0.5 hrs (documentation only)",
+        "unclassified_defect": "TBD (pending manual inspection)",
     }.get(defect_type.lower(), "TBD")
 
 
@@ -546,7 +550,9 @@ def _wo_tools(defect_type: str) -> list:
         "pitting":   ["Alodine 1200 conversion coating kit",
                       "Phosphoric acid wash solution",
                       "Epoxy primer MIL-PRF-23377", "Pit depth gauge"],
-        "clean":     [],
+        "clean":               [],
+        "unclassified_defect": ["Full visual inspection kit", "Dye-penetrant inspection kit (ASTM E1417)",
+                                "Ultrasonic thickness gauge"],
     }
     return base + extras.get(defect_type.lower(), [])
 
@@ -584,7 +590,8 @@ def _eo_repair_method(defect_type: str, decision: str) -> str:
         ("inclusion", "ACCEPT"):  "Document location; MP or FP inspection every 200 FH per AMS 2641.",
         ("inclusion", "MONITOR"): "Phased-array ultrasonic per AMS 2631; if < 0.050 in., monitor at 100 FH.",
         ("inclusion", "REJECT"):  "Remove from service; metallurgical analysis per ASTM E2332; replace with AMS 2175 certified material.",
-        ("clean",     "ACCEPT"):  "No repair required. Continue normal inspection intervals.",
+        ("clean",               "ACCEPT"):  "No repair required. Continue normal inspection intervals.",
+        ("unclassified_defect", "REJECT"):  "Ground aircraft. Perform full manual visual and NDT inspection. Do not return to service until defect is positively identified and dispositioned by a DER.",
     }
     key = (defect_type.lower(), decision.upper())
     return methods.get(key, "Consult Designated Engineering Representative (DER) for approved repair data.")
