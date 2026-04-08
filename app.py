@@ -145,6 +145,7 @@ def inspect_and_advise(
         )
         wo_path = generate_work_order(
             defect_type=label,
+            decision=advisory.decision,
             repair_procedure=advisory.repair_procedure,
             part_number=part_number,
         )
