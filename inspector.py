@@ -8,11 +8,11 @@ NEU_BASE_URL = "https://raw.githubusercontent.com/abin24/Surface-Inspection/mast
 
 CONFIDENCE_THRESHOLD = 0.70
 
-DEFECT_TYPES = ["scratch", "pitted", "crazing", "inclusion"]
+DEFECT_TYPES = ["scratch", "pitting", "crazing", "inclusion"]
 
 DEFECT_FILES = {
     "scratch": "scratch_1.bmp",
-    "pitted": "pitted_1.bmp",
+    "pitting": "pitted_1.bmp",
     "crazing": "crazing_1.bmp",
     "inclusion": "inclusion_1.bmp",
 }
@@ -37,7 +37,7 @@ def create_synthetic_defect(defect_type, dest_path):
 
     Uses a uniform base to ensure only defect features contribute edges.
     Target densities (on 200x200 = 40 000 px):
-      pitted   : 0.005-0.02  (~200-800 edge px)
+      pitting  : 0.005-0.02  (~200-800 edge px)
       scratch  : 0.02-0.05   (~800-2000 edge px)
       crazing  : 0.05-0.15   (~2000-6000 edge px)
       inclusion: >0.15       (>6000 edge px)
@@ -57,7 +57,7 @@ def create_synthetic_defect(defect_type, dest_path):
             y1 = int(rng.integers(140, 190))
             cv2.line(img, (x0, y0), (x1, y1), 230, thickness=3)
 
-    elif defect_type == "pitted":
+    elif defect_type == "pitting":
         # Small filled dark circles → low edge count (pitting range 0.005-0.02)
         for _ in range(8):
             cx = int(rng.integers(15, 185))

@@ -71,6 +71,20 @@
         "monitor": "N/A",
         "reject":  "N/A"
       }
+    },
+    "unclassified_defect": {
+      "description": "Defect detected but classifier confidence below acceptable threshold; type cannot be reliably determined",
+      "faa_reference": "AC 43.13-1B Chapter 1, Section 1-5",
+      "thresholds": {
+        "accept":  { "max_density": 0.000, "note": "N/A — unclassified defects are never accepted" },
+        "monitor": { "max_density": 0.000, "note": "N/A — unclassified defects require full evaluation" },
+        "reject":  { "max_density": 1.000, "note": "Cannot determine defect severity; reject pending full DER evaluation" }
+      },
+      "repair_procedures": {
+        "accept":  "N/A",
+        "monitor": "N/A",
+        "reject":  "Ground aircraft immediately. Submit component for full NDE evaluation (dye-penetrant, ultrasonic, radiographic as applicable). Obtain DER disposition before return to service. Document in maintenance log per 14 CFR Part 43 Appendix A."
+      }
     }
   }
 }
