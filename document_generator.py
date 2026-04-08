@@ -261,6 +261,7 @@ def generate_ncr(
 
 def generate_work_order(
     defect_type: str,
+    decision: str,
     repair_procedure: str,
     part_number: str = "PN-UNKNOWN",
 ) -> str:
@@ -269,6 +270,7 @@ def generate_work_order(
     Parameters
     ----------
     defect_type       : Detected defect classification
+    decision          : Engineering disposition (ACCEPT / MONITOR / REJECT)
     repair_procedure  : Repair instructions from the engineering advisory
     part_number       : Aircraft part number
 
@@ -279,8 +281,8 @@ def generate_work_order(
     wo_number = _doc_number("WO")
     out_path  = os.path.join(DOCS_DIR, f"{wo_number}.pdf")
 
-    priority     = _wo_priority(defect_type)
-    est_hours    = _wo_hours(defect_type)
+    priority     = _wo_priority(decision)
+    est_hours    = _wo_hours(decision, defect_type)
     tools        = _wo_tools(defect_type)
 
     doc = SimpleDocTemplate(
@@ -514,26 +516,39 @@ def _decision_basis(decision: str) -> str:
     }.get(decision.upper(), "Engineering judgement required")
 
 
-def _wo_priority(defect_type: str) -> str:
+def _wo_priority(decision: str) -> str:
+    """Map engineering decision to work order priority.
+
+    ACCEPT  → Routine   (no urgency; normal maintenance queue)
+    MONITOR → Priority  (schedule within next maintenance window)
+    REJECT  → AOG       (Aircraft On Ground; immediate action required)
+    """
     return {
-        "inclusion":           "AOG",
-        "crazing":             "AOG",
-        "scratch":             "Routine",
-        "pitting":             "Routine",
-        "clean":               "Scheduled",
-        "unclassified_defect": "AOG",
-    }.get(defect_type.lower(), "Routine")
+        "ACCEPT":  "Routine",
+        "MONITOR": "Priority",
+        "REJECT":  "AOG",
+    }.get(decision.upper(), "Routine")
 
 
-def _wo_hours(defect_type: str) -> str:
-    return {
-        "inclusion":           "4–8 hrs (NDE + replacement)",
-        "crazing":             "3–6 hrs (composite repair)",
-        "scratch":             "1–2 hrs (blend/polish)",
-        "pitting":             "2–4 hrs (chemical treatment)",
-        "clean":               "0.5 hrs (documentation only)",
-        "unclassified_defect": "TBD (pending manual inspection)",
-    }.get(defect_type.lower(), "TBD")
+def _wo_hours(decision: str, defect_type: str) -> str:
+    """Estimate labour hours based on engineering decision and defect type."""
+    hours = {
+        ("ACCEPT",  "scratch"):             "0.5–1 hr (blend/polish)",
+        ("ACCEPT",  "pitting"):             "1–2 hrs (chemical treatment)",
+        ("ACCEPT",  "crazing"):             "1–2 hrs (surface treatment)",
+        ("ACCEPT",  "inclusion"):           "1–2 hrs (documentation + FP inspection)",
+        ("ACCEPT",  "clean"):               "0.5 hrs (documentation only)",
+        ("MONITOR", "scratch"):             "2–3 hrs (profilometer + blend)",
+        ("MONITOR", "pitting"):             "2–4 hrs (chemical treatment + depth measurement)",
+        ("MONITOR", "crazing"):             "3–5 hrs (dye-penetrant + repair)",
+        ("MONITOR", "inclusion"):           "3–5 hrs (phased-array scan)",
+        ("REJECT",  "scratch"):             "4–6 hrs (material removal + DER sign-off)",
+        ("REJECT",  "pitting"):             "4–6 hrs (section removal + corrosion treatment)",
+        ("REJECT",  "crazing"):             "6–10 hrs (C-scan + composite repair + IA sign-off)",
+        ("REJECT",  "inclusion"):           "6–10 hrs (NDE + metallurgical analysis + replacement)",
+        ("REJECT",  "unclassified_defect"): "TBD (pending manual inspection and DER review)",
+    }
+    return hours.get((decision.upper(), defect_type.lower()), "TBD")
 
 
 def _wo_tools(defect_type: str) -> list:
