@@ -5,14 +5,14 @@ Defect Type    : scratch
 Image          : scratch_1.bmp
 Edge Map       : output_scratch.png
 Detected Label : scratch
-Edge Pixels    : 1820
-Edge Density   : 0.0455
-Confidence     : 0.650
+Edge Pixels    : 1279
+Edge Density   : 0.0320
+Confidence     : 0.899
 
-Defect Type    : pitted
-Image          : pitted_1.bmp
-Edge Map       : output_pitted.png
-Detected Label : pitting
+Defect Type    : pitting
+Image          : pitting_1.bmp
+Edge Map       : output_pitting.png
+Detected Label : unclassified_defect
 Edge Pixels    : 312
 Edge Density   : 0.0078
 Confidence     : 0.687
@@ -20,18 +20,18 @@ Confidence     : 0.687
 Defect Type    : crazing
 Image          : crazing_1.bmp
 Edge Map       : output_crazing.png
-Detected Label : crazing
-Edge Pixels    : 2275
-Edge Density   : 0.0569
-Confidence     : 0.569
+Detected Label : unclassified_defect
+Edge Pixels    : 2198
+Edge Density   : 0.0549
+Confidence     : 0.549
 
 Defect Type    : inclusion
 Image          : inclusion_1.bmp
 Edge Map       : output_inclusion.png
-Detected Label : inclusion
-Edge Pixels    : 10227
-Edge Density   : 0.2557
-Confidence     : 0.624
+Detected Label : unclassified_defect
+Edge Pixels    : 12318
+Edge Density   : 0.3080
+Confidence     : 0.686
 
 Density thresholds:
   < 0.005         -> clean
