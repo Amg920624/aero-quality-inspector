@@ -1,8 +1,17 @@
 # Aero Quality Inspector
 
-Automated aerospace surface defect inspection system that classifies surface
-anomalies in component images and generates FAA-compliant engineering work
-documents — ready for review by an A&P mechanic or DER.
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Amg920624/aero-quality-inspector/blob/main/app.py)
+
+Aerospace surface defect inspection is one of the last high-stakes workflows
+still done largely by hand. As an aerospace engineer working on an Airbus
+assembly line in Montreal, I built this system to change that — automating the
+FAA AC 43.13-1B compliance workflow that links a surface image to a calibrated
+engineering decision and three audit-ready PDFs, without a human having to open
+a reference manual. The goal is to show how applied AI can reduce inspector
+workload, eliminate documentation variability, and create a traceable quality
+record at the speed of production.
 
 ---
 
@@ -152,6 +161,14 @@ formatted advisory reports to stdout.
 
 ---
 
+## Demo
+
+![Dashboard](docs/demo.png)
+
+Gradio dashboard — upload a surface image to receive an engineering decision and three audit-ready PDFs.
+
+---
+
 ## Sample Output
 
 ```
@@ -183,8 +200,37 @@ Three PDFs are saved to `generated_docs/` with document numbers in the format
 
 ---
 
+## Limitations & Roadmap
+
+### Current limitations
+
+- **Edge-density-only detection** — classification relies entirely on Canny edge
+  pixel density mapped to fixed thresholds. It does not use a trained model and
+  has no learned feature representation, so performance is sensitive to image
+  lighting, resolution, and surface finish.
+- **No trained CNN** — there is no convolutional or deep-learning backbone yet.
+  The system cannot generalise to defect types outside the four it was designed
+  for, and confidence scores are heuristic rather than probabilistic.
+- **Single-image, single-zone** — each run inspects one image and one aircraft
+  zone. Batch processing and multi-zone correlation are not yet supported.
+
+### Roadmap
+
+- **GNN-based defect detection** — replace the edge-density heuristic with a
+  graph neural network trained on labelled surface-defect datasets (NEU, DAGM)
+  for higher accuracy and generalisation to new defect morphologies.
+- **Multi-image batch processing** — accept a folder or ZIP of images, run
+  parallel inspections, and produce a consolidated compliance summary report.
+- **MRO system integration** — export work orders in formats compatible with
+  common Maintenance, Repair & Overhaul platforms (SAP PM, AMOS, Quantum MX)
+  to close the loop between AI-generated findings and maintenance execution.
+
+---
+
 ## Author
 
-Built by an aerospace engineer in Montreal.
+**Aaron Mandujano** — aerospace engineer in Montreal, building at the
+intersection of aerospace and AI. Currently working on Airbus assembly and
+applying machine learning to industrial quality and compliance workflows.
 
 [linkedin.com/in/aaron-mandujano-289778161](https://www.linkedin.com/in/aaron-mandujano-289778161)
