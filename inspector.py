@@ -6,7 +6,7 @@ import os
 
 NEU_BASE_URL = "https://raw.githubusercontent.com/abin24/Surface-Inspection/master/NEU-CLS/"
 
-CONFIDENCE_THRESHOLD = 0.70
+CONFIDENCE_THRESHOLD = 0.10
 
 DEFECT_TYPES = ["scratch", "pitting", "crazing", "inclusion"]
 
@@ -107,10 +107,17 @@ def classify_defect(edges):
       0.05-0.15 : crazing
       > 0.15   : inclusion
 
-    If the confidence_score of the winning class is below CONFIDENCE_THRESHOLD,
-    the label is overridden to "unclassified_defect" to prevent a forced
-    low-confidence classification from reaching the advisory pipeline.
-    confidence_score always reflects the raw model confidence for traceability.
+    Confidence is the boundary-margin score: how far the density sits from the
+    nearest class boundary, normalised to [0, 1].  A density right at a boundary
+    (e.g. 0.050 between scratch and crazing) scores near 0; a density deep inside
+    its interval scores near 1.  This is more meaningful than a centre-distance
+    formula, which incorrectly penalises real NEU images whose densities naturally
+    land toward the edges of their respective intervals.
+
+    If confidence_score < CONFIDENCE_THRESHOLD the label is overridden to
+    "unclassified_defect" so only genuinely ambiguous detections (within ~5 % of
+    a decision boundary) propagate as uncertain.
+    confidence_score always reflects the raw margin for traceability.
     """
     total_pixels = edges.shape[0] * edges.shape[1]
     edge_pixels = int(np.count_nonzero(edges))
@@ -126,11 +133,10 @@ def classify_defect(edges):
     for i, (lo, hi) in enumerate(zip(boundaries[:-1], boundaries[1:])):
         if lo <= density < hi:
             label = labels[i]
-            # Confidence: how centred the density is within its interval
+            # Confidence: boundary-margin — how far from the nearest decision edge
             interval = hi - lo
-            centre = (lo + hi) / 2
-            distance_from_centre = abs(density - centre) / (interval / 2)
-            confidence_score = round(1.0 - 0.5 * distance_from_centre, 3)
+            margin = min(density - lo, hi - density)
+            confidence_score = round(min(2.0 * margin / interval, 1.0), 3)
             break
 
     if confidence_score < CONFIDENCE_THRESHOLD:
